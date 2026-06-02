@@ -1,0 +1,719 @@
+<!doctype html>
+<html lang="es">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistema de Cotizaciones</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <style>
+    /* =========================================================
+       TU CSS ORIGINAL INTACTO (Colores, botones, fuentes)
+       ========================================================= */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: Arial, Helvetica, sans-serif; height: 100vh; overflow: hidden; font-size: 1.1rem; transition: background-color 0.3s ease, color 0.3s ease; }
+    
+    body.light-mode { background: #ffffff; color: #1a1a1a; }
+    body.light-mode .header { background: #ffffff; border-bottom: 2px solid #e5e5e5; color: #1a1a1a; }
+    body.light-mode .nav-tab { color: #666666; }
+    body.light-mode .nav-tab:hover { color: #1a1a1a; background: rgba(0, 0, 0, 0.05); }
+    body.light-mode .nav-tab.active { color: #1a1a1a; border-left-color: #333333; background: rgba(0, 0, 0, 0.08); }
+    body.light-mode .form-input { border: 1px solid #d4d4d4; background: #f9f9f9; color: #1a1a1a; }
+    body.light-mode .btn { border: 1px solid #333333; background: rgba(0, 0, 0, 0.08); color: #1a1a1a; }
+    body.light-mode .card, body.light-mode .pos-ticket, body.light-mode .sidebar { background: #f9f9f9; border-color: #e5e5e5; }
+    body.light-mode .day-header { background: rgba(0,0,0,0.03); border: 1px solid #e5e5e5; }
+
+    body.dark-mode { background: #0a0a0a; color: #e5e5e5; }
+    body.dark-mode .header { background: #0a0a0a; border-bottom: 2px solid #2a2a2a; color: #e5e5e5; }
+    body.dark-mode .nav-tab { color: #999999; }
+    body.dark-mode .nav-tab:hover { color: #e5e5e5; background: rgba(255, 255, 255, 0.05); }
+    body.dark-mode .nav-tab.active { color: #e5e5e5; border-left-color: #10b981; background: rgba(255, 255, 255, 0.08); font-weight: bold; }
+    body.dark-mode .form-input { border: 1px solid #2a2a2a; background: #151515; color: #e5e5e5; }
+    body.dark-mode .form-input:focus { border-color: #666666; background: #1a1a1a; box-shadow: 0 0 0 1px #666666; }
+    body.dark-mode .form-label { color: #999999; }
+    body.dark-mode .btn { border: 1px solid #666666; background: rgba(255, 255, 255, 0.08); color: #e5e5e5; }
+    body.dark-mode .btn:hover:not(:disabled) { background: rgba(255, 255, 255, 0.15); box-shadow: 0 0 12px rgba(255, 255, 255, 0.15); }
+    body.dark-mode .btn-danger { background: rgba(220, 38, 38, 0.2); color: #ef4444; border: 1px solid #991b1b; }
+    body.dark-mode .btn-danger:hover:not(:disabled) { background: rgba(220, 38, 38, 0.3); box-shadow: 0 0 12px rgba(220, 38, 38, 0.3); }
+    body.dark-mode .card { background: #151515; border: 1px solid #2a2a2a; }
+    body.dark-mode .empty-state { color: #666666; background: #151515; border: 1px dashed #2a2a2a; }
+    body.dark-mode .item-card { border-left: 2px solid #10b981; background: #151515; border-top:1px solid #2a2a2a; border-right:1px solid #2a2a2a; border-bottom:1px solid #2a2a2a; }
+    body.dark-mode .sidebar { background: #151515; border-right: 1px solid #2a2a2a; }
+    body.dark-mode .pos-ticket { background: #151515; border: 1px solid #2a2a2a; }
+    body.dark-mode .day-header { background: rgba(255,255,255,0.03); border: 1px solid #2a2a2a; }
+    
+    .form-group { margin-bottom: 1.25rem; }
+    .form-label { display: block; font-size: 0.9rem; font-weight: 600; text-transform: none; margin-bottom: 0.5rem; }
+    .form-input { width: 100%; padding: 0.75rem; font-size: 1rem; transition: all 0.2s ease; border-radius: 2px; }
+    .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; }
+    .btn { padding: 0.875rem 1.75rem; font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease; border-radius: 2px; }
+    .btn-small { padding: 0.5rem 1rem; font-size: 0.7rem; }
+    .card { padding: 1.5rem; border-radius: 2px; margin-bottom: 1.5rem; transition: all 0.2s ease; }
+    .section-title { font-size: 1.5rem; font-weight: 700; margin-bottom: 1.5rem; position: relative; padding-bottom: 0.75rem; }
+    .section-title::after { content: ''; position: absolute; bottom: 0; left: 0; width: 50px; height: 2px; background: #666666; }
+    .empty-state { text-align: center; padding: 3rem 2rem; font-size: 0.9rem; border-radius: 2px; letter-spacing: 1px; }
+
+    /* =========================================================
+       LAYOUT: SIDEBAR RETRÁCTIL
+       ========================================================= */
+    #app-container { display: flex; height: 100vh; width: 100vw; }
+    
+    .sidebar { width: 250px; display: flex; flex-direction: column; transition: margin-left 0.3s ease; flex-shrink: 0; z-index: 100; }
+    .sidebar.collapsed { margin-left: -250px; }
+    
+    .header { padding: 1.5rem; }
+    .header h1 { font-size: 1.5rem; font-weight: 700; letter-spacing: 1px; }
+    .company-subtitle { font-size: 0.9rem; font-weight: 400; opacity: 0.7; margin-top: 0.25rem; letter-spacing: 0.5px; }
+    
+    .nav-tabs { display: flex; flex-direction: column; padding: 1rem 0; flex: 1; }
+    .nav-tab { padding: 1rem 1.5rem; background: none; border: none; cursor: pointer; text-align: left; text-transform: uppercase; letter-spacing: 2px; font-size: 0.75rem; transition: 0.2s; border-left: 3px solid transparent; font-family: 'Courier New', monospace; }
+
+    /* ÁREA DE TRABAJO */
+    .main-wrapper { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+    
+    .topbar { padding: 1rem 1.5rem; display: flex; align-items: center; border-bottom: 1px solid #2a2a2a; }
+    body.light-mode .topbar { border-bottom-color: #e5e5e5; background: #ffffff; }
+    .toggle-sidebar-btn { background: none; border: 1px solid #666; color: inherit; font-size: 1.25rem; cursor: pointer; padding: 0.25rem 0.75rem; border-radius: 2px; margin-right: 1rem; }
+    
+    .main-content { flex: 1; overflow-y: auto; padding: 2rem; }
+    .tab-content { display: none; max-width: 1400px; margin: 0 auto; animation: fadeIn 0.3s ease; }
+    .tab-content.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* =========================================================
+       POS LAYOUT (Cotizador Izquierda, Ticket Derecha)
+       ========================================================= */
+    .pos-layout { display: flex; gap: 2rem; align-items: flex-start; }
+    .pos-editor { flex: 1.5; }
+    .pos-ticket { width: 420px; position: sticky; top: 0; display: flex; flex-direction: column; flex-shrink: 0; border-radius: 2px; }
+
+    /* Barra Superior de Materiales Activos */
+    .mat-bar-card { min-width: 180px; border: 1px solid #2a2a2a; padding: 1rem; border-radius: 2px; cursor: pointer; transition: 0.2s; user-select: none; background: rgba(255,255,255,0.02); }
+    body.light-mode .mat-bar-card { border-color: #d4d4d4; background: #f9f9f9; }
+    .mat-bar-card:hover { border-color: #666; }
+    .mat-bar-card.active { border-color: #10b981; background: rgba(16,185,129,0.05); border-left: 3px solid #10b981; }
+
+    /* Items */
+    .item-card { padding: 1.5rem; margin-bottom: 1.5rem; border-radius: 2px; transition: all 0.2s ease; }
+    .item-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; }
+    .item-title { font-size: 1rem; font-weight: 400; letter-spacing: 2px; text-transform: uppercase; }
+    .checkbox-option { display: flex; align-items: center; gap: 0.5rem; }
+    .checkbox-option input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; }
+    .checkbox-option label { font-size: 0.8rem; font-weight: 400; cursor: pointer; user-select: none; letter-spacing: 1px; }
+
+    /* Info Interna Vendedora */
+    .internal-stats { margin-top: 1.25rem; padding: 0.85rem; background: rgba(16, 185, 129, 0.1); border: 1px solid #10b981; border-radius: 2px; font-size: 0.85rem; color: #10b981; display: none; line-height: 1.5; }
+    body.light-mode .internal-stats { background: rgba(16, 185, 129, 0.15); color: #059669; }
+
+    /* Estructura del Ticket Derecho */
+    .ticket-capture-area { display: flex; flex-direction: column; background: inherit; }
+    .ticket-banner img { width: 100%; display: block; height: auto; object-fit: contain; }
+    .ticket-header { padding: 1.5rem; text-align: center; border-bottom: 1px dashed #666; }
+    .ticket-client { font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .ticket-date-row { display: flex; justify-content: space-between; font-size: 0.8rem; opacity: 0.7; font-family: 'Courier New', monospace; margin-bottom: 0.5rem; }
+    .ticket-body { padding: 1.5rem; flex: 1; }
+    .ticket-item { margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px dashed #666; }
+    .ticket-item:last-child { border-bottom: none; padding-bottom: 0; margin-bottom: 0; }
+    .t-row { display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 0.4rem; }
+    .t-name { font-weight: 600; text-transform: uppercase; font-size: 0.9rem; }
+    .t-math { font-family: 'Courier New', monospace; font-size: 0.75rem; opacity: 0.7; }
+    .ticket-total-box { padding: 1.5rem; text-align: center; border-top: 1px dashed #666; border-bottom: 1px dashed #666; }
+    .t-total-label { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 3px; opacity: 0.7; margin-bottom: 0.5rem; }
+    .t-total-val { font-size: 2rem; font-weight: 700; }
+    
+    .ticket-actions { padding: 1rem; display: flex; gap: 0.5rem; border-top: 1px solid #2a2a2a; }
+    body.light-mode .ticket-actions { border-top-color: #e5e5e5; }
+    .btn-action { flex: 1; padding: 0.75rem; border: 1px solid #666; background: rgba(255,255,255,0.05); color: inherit; cursor: pointer; border-radius: 2px; font-size: 0.9rem; font-weight: 600; transition: 0.2s; }
+    body.light-mode .btn-action { border-color: #d4d4d4; background: #f9f9f9; }
+    .btn-action:hover { background: rgba(255,255,255,0.1); }
+    body.light-mode .btn-action:hover { background: #e5e5e5; }
+    
+    .toast { position: fixed; top: 30px; left: 50%; transform: translateX(-50%); padding: 0.875rem 1.75rem; z-index: 3000; font-weight: 400; letter-spacing: 2px; border-radius: 2px; animation: slideDown 0.3s ease; font-size: 0.8rem; text-transform: uppercase; }
+    @keyframes slideDown { from { opacity: 0; transform: translate(-50%, -15px); } to { opacity: 1; transform: translate(-50%, 0); } }
+    
+    @media (max-width: 1024px) {
+      .pos-layout { flex-direction: column; }
+      .pos-ticket { width: 100%; position: relative; }
+    }
+  </style>
+ </head>
+ <body class="dark-mode">
+  
+  <div id="app-container">
+   
+   <!-- SIDEBAR RETRÁCTIL -->
+   <aside class="sidebar" id="sidebar">
+     <div class="header">
+       <h1 id="app-title">💼 Ventas</h1>
+       <div class="company-subtitle" id="company-name">GrisFosforescente</div>
+     </div>
+     <nav class="nav-tabs">
+       <button class="nav-tab active" data-tab="new-quote">👽 Nueva Cotización</button>
+       <button class="nav-tab" data-tab="materials">🛸 Materiales</button>
+       <button class="nav-tab" data-tab="quotes">🌌 Cotizaciones</button>
+       <button class="nav-tab" data-tab="accounting">💰 Contabilidad</button>
+       <button class="nav-tab" data-tab="config">🔧 Configuración</button>
+     </nav>
+   </aside>
+
+   <div class="main-wrapper">
+     
+     <header class="topbar">
+       <button class="toggle-sidebar-btn" id="toggle-sidebar">☰</button>
+       <span style="font-weight:600; letter-spacing:1px; opacity:0.8;">Terminal Operativa</span>
+     </header>
+
+     <div class="main-content">
+      
+      <!-- =========================================================
+           NUEVA COTIZACIÓN
+           ========================================================= -->
+      <div id="new-quote-tab" class="tab-content active">
+       <div class="pos-layout">
+        
+        <div class="pos-editor">
+         <h3 style="font-size: 0.85rem; opacity:0.7; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 1rem;">1. Material Rápido</h3>
+         <div id="top-material-bar" style="display: flex; gap: 1rem; overflow-x: auto; padding-bottom: 0.5rem; margin-bottom: 2rem;"></div>
+
+         <h3 style="font-size: 0.85rem; opacity:0.7; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 1rem;">2. Dimensiones y Cliente</h3>
+         <div class="card">
+          <div class="form-group" style="margin-bottom: 0;">
+           <label class="form-label" for="q-client">Nombre del Cliente</label>
+           <input type="text" class="form-input" id="q-client" placeholder="Ingresa el nombre del cliente" oninput="upTot()">
+          </div>
+         </div>
+
+         <div id="items-container"></div>
+         
+         <button class="btn" id="add-item" style="width: 100%; margin-bottom: 2rem; padding: 1rem; border-style: dashed; background: transparent;">+ AGREGAR OTRO PRODUCTO</button>
+         
+         <div class="card" style="margin-top: 2rem;">
+          <div class="form-row" style="margin-bottom: 0; align-items: flex-end;">
+           <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label" for="q-ship">Costo de Envío</label>
+            <input type="number" class="form-input" id="q-ship" step="0.01" value="0" oninput="upTot()">
+           </div>
+           <div class="form-group" style="margin-bottom: 0; text-align: right;">
+            <label class="form-label">Subtotal</label>
+            <div id="subtotal" style="font-size: 1.5rem; font-weight: 600;">$0.00</div>
+           </div>
+          </div>
+         </div>
+        </div>
+
+        <div class="pos-ticket">
+         <div id="area-recibo-captura" class="ticket-capture-area">
+          <div class="ticket-banner"><img id="img-banner-top" style="display:none;"></div>
+          
+          <div class="ticket-header">
+           <h2>Cotización</h2>
+           <div class="ticket-client" id="tk-client">Cliente</div>
+           <div class="ticket-date-row">
+            <span id="tk-date">DD/MM/AAAA</span>
+            <span id="tk-time">00:00</span>
+           </div>
+           <div id="tk-ship-msg" style="font-size:0.8rem; margin-top:0.5rem;">Cliente recolecta en Centro de Entregas Coapa</div>
+          </div>
+          
+          <div class="ticket-body" id="tk-items">
+           <div class="empty-state" style="border:none;">Agrega productos para calcular.</div>
+          </div>
+          
+          <div class="ticket-total-box">
+           <div class="t-total-label">Total</div>
+           <div class="t-total-val" id="tk-total">$0.00</div>
+          </div>
+
+          <div class="ticket-banner"><img id="img-banner-bottom" style="display:none;"></div>
+         </div>
+
+         <div class="ticket-actions">
+          <button class="btn-action" style="background:rgba(59,130,246,0.2); border-color:#3b82f6; color:#3b82f6;" onclick="capturarPantalla()">📸 Foto</button>
+          <button class="btn-action" onclick="clrQ()">🗑 Limpiar</button>
+          <button class="btn-action" style="background:rgba(16,185,129,0.2); border-color:#10b981; color:#10b981;" id="save-q">💾 Guardar</button>
+         </div>
+        </div>
+
+       </div>
+      </div>
+
+      <!-- =========================================================
+           MATERIALES
+           ========================================================= -->
+      <div id="materials-tab" class="tab-content">
+       <h2 class="section-title">Gestión de Materiales</h2>
+       <form id="material-form" class="card">
+        <div class="form-row">
+         <div class="form-group"><label class="form-label" for="mat-name">Nombre del Material</label><input type="text" class="form-input" id="mat-name" required></div>
+         <div class="form-group"><label class="form-label" for="mat-w">Ancho Impresión (cm)</label><input type="number" class="form-input" id="mat-w" step="0.01" required></div>
+         <div class="form-group"><label class="form-label" for="mat-h">Alto Impresión (cm)</label><input type="number" class="form-input" id="mat-h" step="0.01" required></div>
+        </div>
+        <div class="form-row">
+         <div class="form-group"><label class="form-label" for="mat-roll">Precio Planilla ($)</label><input type="number" class="form-input" id="mat-roll" step="0.01" required></div>
+         <div class="form-group"><label class="form-label" for="mat-cut">Corte Completo ($)</label><input type="number" class="form-input" id="mat-cut" step="0.01" required></div>
+         <div class="form-group"><label class="form-label" for="mat-lam">Laminado ($)</label><input type="number" class="form-input" id="mat-lam" step="0.01" required></div>
+        </div>
+        <button type="submit" class="btn" id="save-mat-btn">Guardar Material</button>
+       </form>
+       <div id="materials-list"></div>
+      </div>
+
+      <!-- =========================================================
+           COTIZACIONES
+           ========================================================= -->
+      <div id="quotes-tab" class="tab-content">
+       <h2 class="section-title">Cotizaciones Guardadas</h2>
+       <div id="quotes-list"></div>
+      </div>
+
+      <!-- =========================================================
+           CONTABILIDAD
+           ========================================================= -->
+      <div id="accounting-tab" class="tab-content">
+       <h2 class="section-title">Contabilidad - Ventas Pagadas</h2>
+       <div id="accounting-list"></div>
+      </div>
+
+      <!-- =========================================================
+           CONFIGURACIÓN Y MANTENIMIENTO DE DATOS
+           ========================================================= -->
+      <div id="config-tab" class="tab-content">
+       <h2 class="section-title">Configuración del Sistema</h2>
+       <div class="card">
+         <button class="btn" id="theme-toggle">Cambiar Modo Día/Noche</button>
+       </div>
+       
+       <div class="card" style="margin-top:2rem;">
+         <h3 style="margin-bottom:1rem; font-weight:400; text-transform:uppercase; letter-spacing:2px; font-size:1rem;">Banners del Ticket (Offline)</h3>
+         <p style="font-size:0.85rem; opacity:0.7; margin-bottom:1.5rem;">Carga las imágenes desde tu computadora. Se guardarán internamente en tu navegador para que la captura de pantalla funcione siempre sin requerir internet.</p>
+         
+         <div class="form-group">
+           <label class="form-label">Cargar Banner Superior</label>
+           <input type="file" class="form-input" id="upload-top" accept="image/png, image/jpeg">
+         </div>
+         <div class="form-group" style="margin-top:1.5rem;">
+           <label class="form-label">Cargar Banner Inferior</label>
+           <input type="file" class="form-input" id="upload-bottom" accept="image/png, image/jpeg">
+         </div>
+       </div>
+
+       <div class="card" style="margin-top:2rem; border-color: rgba(239, 68, 68, 0.3);">
+         <h3 style="margin-bottom:1rem; font-weight:400; text-transform:uppercase; letter-spacing:2px; font-size:1rem;">Respaldo y Mantenimiento</h3>
+         <div class="form-row">
+           <button class="btn" style="width:100%; border-color:#3b82f6; color:#3b82f6;" onclick="descargarRespaldo()">📥 Descargar Respaldo (JSON)</button>
+           <button class="btn btn-danger" style="width:100%;" onclick="limpiarHistorial()">🗑 Limpiar Cotizaciones</button>
+           <button class="btn btn-danger" style="width:100%;" onclick="purgarTodo()">⚠️ Borrar Todo (Reset)</button>
+         </div>
+       </div>
+      </div>
+
+     </div>
+   </div>
+  </div>
+
+  <script>
+    // ═══════════════════════════════════════════════════════════════
+    // UI Y NAVEGACIÓN
+    // ═══════════════════════════════════════════════════════════════
+    document.getElementById('toggle-sidebar').addEventListener('click', () => {
+      document.getElementById('sidebar').classList.toggle('collapsed');
+    });
+
+    let mats = JSON.parse(localStorage.getItem('sys_mats')) || [];
+    let quos = JSON.parse(localStorage.getItem('sys_quos')) || [];
+    let configs = JSON.parse(localStorage.getItem('sys_cfg')) || { dark: true, bannerTop: '', bannerBottom: '' };
+    let its = [];
+    let cnt = 0;
+    let editMat = null;
+    let editQuo = null;
+    let activeTopMat = null;
+
+    function saveData() {
+      localStorage.setItem('sys_mats', JSON.stringify(mats));
+      localStorage.setItem('sys_quos', JSON.stringify(quos));
+      localStorage.setItem('sys_cfg', JSON.stringify(configs));
+    }
+
+    function toast(message, type = 'success') {
+      const t = document.createElement('div');
+      t.className = `toast`;
+      t.style.borderColor = type === 'error' ? '#dc2626' : '#10b981';
+      t.style.background = document.body.classList.contains('dark-mode') ? '#151515' : '#ffffff';
+      t.style.color = document.body.classList.contains('dark-mode') ? '#e5e5e5' : '#1a1a1a';
+      t.textContent = message;
+      document.body.appendChild(t);
+      setTimeout(() => { if(t.parentElement) t.remove(); }, 3000);
+    }
+
+    document.querySelectorAll('.nav-tab').forEach(t => {
+      t.addEventListener('click', () => {
+        document.querySelectorAll('.nav-tab').forEach(x => x.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(x => x.classList.remove('active'));
+        t.classList.add('active');
+        document.getElementById(`${t.dataset.tab}-tab`).classList.add('active');
+        
+        if (t.dataset.tab === 'materials') showMats();
+        if (t.dataset.tab === 'quotes') showQuos();
+        if (t.dataset.tab === 'accounting') showAccounting();
+      });
+    });
+
+    // ═══════════════════════════════════════════════════════════════
+    // 1. CÁLCULO EXACTO DE STICKERS (FRACCIÓN PROPORCIONAL)
+    // ═══════════════════════════════════════════════════════════════
+    function calc(item, material) {
+      const w = parseFloat(item.w) || 0;
+      const h = parseFloat(item.h) || 0;
+      const qty = parseInt(item.qty) || 1; 
+      
+      if (w <= 0 || h <= 0) return { pcs: 0, sh: 0, tot: 0, tBase: 0, tCut: 0, tLam: 0 };
+      
+      // OPTIMIZACIÓN: Calcula si caben más piezas girando el sticker 90 grados
+      const p1 = Math.floor(material.printWidth / w) * Math.floor(material.printHeight / h);
+      const p2 = Math.floor(material.printWidth / h) * Math.floor(material.printHeight / w);
+      const pcs = Math.max(p1, p2); // Se queda con el mejor acomodo
+      
+      if (pcs <= 0) return { pcs: 0, sh: 0, tot: 0, tBase: 0, tCut: 0, tLam: 0 };
+      
+      // LA CORRECCIÓN EXACTA: Uso de la fracción real (sh = qty / pcs) SIN REDONDEAR
+      const sh = qty / pcs; 
+      const tBase = sh * material.priceRoll;
+      const tCut = item.cut ? (sh * material.priceCut) : 0;
+      const tLam = item.lam ? (sh * material.priceLaminate) : 0;
+      
+      return { pcs, sh, tot: tBase + tCut + tLam, tBase, tCut, tLam };
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // 2. TICKET Y TOTALES (OCULTANDO EL COSTO INTERNO)
+    // ═══════════════════════════════════════════════════════════════
+    function upTot() {
+      const cliente = document.getElementById('q-client').value.trim();
+      const shippingCost = parseFloat(document.getElementById('q-ship').value) || 0;
+      
+      let subtotal = 0;
+      let ticketHtml = '';
+      let isValid = false;
+
+      its.forEach((it, i) => {
+        const material = mats.find(m => m.id == it.mid);
+        if (material && parseFloat(it.w)>0 && parseFloat(it.h)>0 && parseInt(it.qty)>0) {
+          isValid = true;
+          const c = calc(it, material);
+          subtotal += c.tot;
+          
+          const title = it.name || `Modelo ${i + 1}`;
+          let srv = [];
+          if (it.cut) srv.push(`Corte`);
+          if (it.lam) srv.push(`Laminado`);
+          const srvStr = srv.length ? `<br><span class="t-math" style="color:#10b981;">Servicios: ${srv.join(', ')}</span>` : '';
+
+          // EL TICKET LIMPIO (PARA EL CLIENTE)
+          ticketHtml += `
+            <div class="ticket-item">
+              <div class="t-row"><span class="t-name">${title}</span><span style="font-weight:600;">$${c.tot.toFixed(2)}</span></div>
+              <div class="t-row" style="margin:0;"><span class="t-math">${material.name} | ${it.w}x${it.h}cm</span><span class="t-math">${parseInt(it.qty) || 1} pzas</span></div>
+              ${srvStr}
+            </div>
+          `;
+
+          // INFO INTERNA EN EL EDITOR (PARA LA VENDEDORA)
+          const statsDiv = document.getElementById(`stats-${it.id}`);
+          if(statsDiv) {
+            statsDiv.innerHTML = `💡 <b>Info Interna:</b> Ocupa ${c.sh.toFixed(2)} planillas (Caben ${c.pcs} pz/plan). Costo Base: $${c.tBase.toFixed(2)}`;
+            statsDiv.style.display = 'block';
+          }
+        } else {
+          // Ocultar stats si faltan medidas
+          const statsDiv = document.getElementById(`stats-${it.id}`);
+          if(statsDiv) statsDiv.style.display = 'none';
+        }
+      });
+
+      const total = subtotal + shippingCost;
+      document.getElementById('subtotal').innerText = `$${subtotal.toFixed(2)}`;
+      document.getElementById('tk-client').innerText = cliente || 'Cliente';
+      
+      const now = new Date();
+      document.getElementById('tk-date').innerText = now.toLocaleDateString();
+      document.getElementById('tk-time').innerText = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+      
+      document.getElementById('tk-ship-msg').innerText = shippingCost > 0 ? `ENVÍO A DOMICILIO ($${shippingCost.toFixed(2)})` : 'Cliente recolecta en Centro de Entregas Coapa';
+      document.getElementById('tk-items').innerHTML = isValid ? ticketHtml : '<div class="empty-state" style="border:none;">Configura los ítems para ver el cálculo.</div>';
+      document.getElementById('tk-total').innerText = `$${total.toFixed(2)}`;
+
+      document.getElementById('save-q').disabled = !(isValid && cliente !== '');
+    }
+
+    function upItemTitle(itemId) {
+      const it = its.find(x => x.id === itemId);
+      const titleSpan = document.querySelector(`#card-${itemId} .item-title`);
+      if (titleSpan) titleSpan.innerText = it.name || `Producto ${its.indexOf(it) + 1}`;
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // 3. EDITOR Y MATERIALES RÁPIDOS
+    // ═══════════════════════════════════════════════════════════════
+    function renderTopMaterialBar() {
+      const c = document.getElementById('top-material-bar');
+      if(!mats.length) { c.innerHTML = '<div style="color:#999; font-size:0.85rem;">Agrega materiales primero en su pestaña correspondiente.</div>'; return; }
+      
+      c.innerHTML = mats.map(m => `
+        <div class="mat-bar-card ${activeTopMat === m.id ? 'active' : ''}" onclick="selectTopMat(${m.id})">
+          <div style="font-weight:600; font-size:0.95rem; margin-bottom:0.25rem;">${m.name}</div>
+          <div style="font-size:0.75rem; opacity:0.7;">${m.printWidth}x${m.printHeight}cm • $${m.priceRoll}</div>
+        </div>
+      `).join('');
+    }
+
+    window.selectTopMat = (id) => {
+      activeTopMat = id;
+      renderTopMaterialBar();
+      if(its.length === 0) { document.getElementById('add-item').click(); } 
+      else { its[its.length - 1].mid = id; showIts(); }
+    };
+
+    document.getElementById('add-item').addEventListener('click', () => {
+      if(!mats.length) return toast('Crea materiales primero', 'error');
+      its.push({ id: `i${++cnt}`, name: '', mid: activeTopMat || mats[0].id, w: '', h: '', qty: 1, cut: false, lam: false });
+      showIts();
+    });
+
+    function showIts() {
+      const container = document.getElementById('items-container');
+      container.innerHTML = its.map((it, i) => `
+        <div class="item-card" id="card-${it.id}">
+          <div class="item-card-header">
+            <span class="item-title">${it.name || `Producto ${i+1}`}</span>
+            <button class="btn btn-danger btn-small" onclick="delI('${it.id}')">Eliminar</button>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label class="form-label">Nombre del Diseño</label><input type="text" class="form-input" id="nm-${it.id}" value="${it.name}"></div>
+            <div class="form-group"><label class="form-label">Material</label>
+              <select class="form-input" id="mid-${it.id}">
+                ${mats.map(m => `<option value="${m.id}" ${m.id == it.mid ? 'selected' : ''}>${m.name}</option>`).join('')}
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label class="form-label">Ancho (cm)</label><input type="number" class="form-input" id="w-${it.id}" step="0.01" value="${it.w}"></div>
+            <div class="form-group"><label class="form-label">Alto (cm)</label><input type="number" class="form-input" id="h-${it.id}" step="0.01" value="${it.h}"></div>
+            <div class="form-group"><label class="form-label">Cantidad</label><input type="number" class="form-input" id="qty-${it.id}" value="${it.qty}"></div>
+          </div>
+          
+          <div style="display:flex; gap:1.5rem; margin-top:1rem; padding-top:1rem; border-top:1px solid #2a2a2a;">
+            <label class="checkbox-option"><input type="checkbox" id="cut-${it.id}" ${it.cut ? 'checked' : ''}> Corte Completo</label>
+            <label class="checkbox-option"><input type="checkbox" id="lam-${it.id}" ${it.lam ? 'checked' : ''}> Laminado</label>
+          </div>
+
+          <!-- LA INFO PARA LA VENDEDORA QUE NO SALE EN EL TICKET -->
+          <div id="stats-${it.id}" class="internal-stats"></div>
+        </div>
+      `).join('');
+
+      its.forEach(it => {
+        document.getElementById(`nm-${it.id}`).addEventListener('input', e => { it.name = e.target.value; upItemTitle(it.id); upTot(); });
+        document.getElementById(`mid-${it.id}`).addEventListener('change', e => { it.mid = e.target.value; upTot(); });
+        document.getElementById(`w-${it.id}`).addEventListener('input', e => { it.w = e.target.value; upTot(); });
+        document.getElementById(`h-${it.id}`).addEventListener('input', e => { it.h = e.target.value; upTot(); });
+        document.getElementById(`qty-${it.id}`).addEventListener('input', e => { it.qty = e.target.value; upTot(); });
+        document.getElementById(`cut-${it.id}`).addEventListener('change', e => { it.cut = e.target.checked; upTot(); });
+        document.getElementById(`lam-${it.id}`).addEventListener('change', e => { it.lam = e.target.checked; upTot(); });
+      });
+      upTot();
+    }
+
+    window.delI = (itemId) => { its = its.filter(x => x.id !== itemId); showIts(); };
+    window.clrQ = () => { document.getElementById('q-client').value = ''; document.getElementById('q-ship').value = '0'; its = []; cnt = 0; editQuo = null; showIts(); };
+
+    // ═══════════════════════════════════════════════════════════════
+    // 4. GUARDAR Y MATERIALES
+    // ═══════════════════════════════════════════════════════════════
+    document.getElementById('save-q').addEventListener('click', () => {
+      const q = {
+        id: editQuo || Date.now(),
+        clientName: document.getElementById('q-client').value.trim(),
+        date: new Date().toISOString(),
+        status: 'pendiente',
+        items: JSON.parse(JSON.stringify(its)),
+        shippingCost: parseFloat(document.getElementById('q-ship').value) || 0,
+        totalCost: parseFloat(document.getElementById('tk-total').innerText.replace('$','').replace(',','')) || 0
+      };
+      if(editQuo) { const i = quos.findIndex(x => x.id === editQuo); quos[i] = q; editQuo = null; } else { quos.push(q); }
+      saveData(); clrQ(); toast('Cotización guardada'); document.querySelector('[data-tab="quotes"]').click();
+    });
+
+    document.getElementById('material-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const d = { id: editMat || Date.now(), name: document.getElementById('mat-name').value, printWidth: parseFloat(document.getElementById('mat-w').value), printHeight: parseFloat(document.getElementById('mat-h').value), priceRoll: parseFloat(document.getElementById('mat-roll').value), priceCut: parseFloat(document.getElementById('mat-cut').value), priceLaminate: parseFloat(document.getElementById('mat-lam').value) };
+      if(editMat) { const i = mats.findIndex(x => x.id === editMat); mats[i] = d; editMat = null; } else { mats.push(d); }
+      saveData(); e.target.reset(); showMats(); renderTopMaterialBar(); showIts(); toast('Material guardado');
+    });
+
+    function showMats() {
+      const container = document.getElementById('materials-list');
+      if(!mats.length) { container.innerHTML = '<div class="empty-state">No hay materiales registrados</div>'; return; }
+      container.innerHTML = mats.map(m => `<div class="card"><div style="display:flex; justify-content:space-between; margin-bottom:1rem;"><div style="font-weight:600; font-size:1.2rem;">${m.name}</div><div style="display:flex; gap:0.5rem;"><button class="btn btn-secondary btn-small" onclick="editM(${m.id})">Editar</button><button class="btn btn-danger btn-small" onclick="delM(${m.id})">Borrar</button></div></div><div style="font-size:0.85rem; color:#999;">Área: ${m.printWidth}x${m.printHeight}cm | Planilla: $${m.priceRoll} | Corte: $${m.priceCut} | Lam: $${m.priceLaminate}</div></div>`).join('');
+    }
+
+    window.editM = (id) => {
+      const m = mats.find(x => x.id === id); editMat = m.id;
+      document.getElementById('mat-name').value = m.name; document.getElementById('mat-w').value = m.printWidth; document.getElementById('mat-h').value = m.printHeight;
+      document.getElementById('mat-roll').value = m.priceRoll; document.getElementById('mat-cut').value = m.priceCut; document.getElementById('mat-lam').value = m.priceLaminate;
+      document.querySelector('[data-tab="materials"]').click();
+    };
+
+    window.delM = (id) => { if(confirm('¿Borrar material?')) { mats = mats.filter(x => x.id !== id); saveData(); showMats(); renderTopMaterialBar(); showIts(); } };
+
+    // ═══════════════════════════════════════════════════════════════
+    // 5. HISTORIAL AGRUPADO POR DÍAS (COMO EN TU IMAGEN)
+    // ═══════════════════════════════════════════════════════════════
+    function showQuos() {
+      const c = document.getElementById('quotes-list');
+      if(!quos.length) { c.innerHTML = '<div class="empty-state">No hay cotizaciones</div>'; return; }
+
+      // Agrupar por fecha
+      const grouped = {};
+      quos.forEach(q => {
+        const dateStr = new Date(q.date).toLocaleDateString();
+        if(!grouped[dateStr]) grouped[dateStr] = { quotes: [], totalDay: 0 };
+        grouped[dateStr].quotes.push(q);
+        grouped[dateStr].totalDay += q.totalCost;
+      });
+
+      // Ordenar fechas (más recientes primero)
+      const sortedDates = Object.keys(grouped).sort((a, b) => {
+         return new Date(grouped[b].quotes[0].date) - new Date(grouped[a].quotes[0].date);
+      });
+
+      let html = '';
+      sortedDates.forEach(date => {
+        const g = grouped[date];
+        html += `
+          <div style="margin-bottom: 2rem;">
+            <div class="day-header" style="padding: 1rem 1.5rem; margin-bottom: 1rem; border-radius: 2px; display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <div style="font-size: 1.1rem; font-weight: 600;">${date}</div>
+                <div style="font-size: 0.75rem; color: #999; margin-top: 0.25rem;">${g.quotes.length} COTIZACIONES</div>
+              </div>
+              <div style="text-align: right;">
+                <div style="font-size: 0.65rem; color: #999; text-transform: uppercase; letter-spacing: 2px;">Total del Día</div>
+                <div style="font-size: 1.5rem; font-weight: 700; color: #10b981;">$${g.totalDay.toFixed(2)}</div>
+              </div>
+            </div>
+        `;
+        
+        html += g.quotes.map(q => `
+          <div class="card" style="border-left:3px solid ${q.status==='pagado'?'#10b981':'#666'};">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+              <div>
+                <div style="font-weight:600; font-size:1.1rem;">${q.clientName}</div>
+                <div style="font-size:0.8rem; color:#999; margin-top:0.25rem;">${new Date(q.date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} | Productos: ${q.items.length}</div>
+              </div>
+              <div style="text-align:right;">
+                <div style="font-weight:700; font-size:1.2rem; color:#10b981;">$${q.totalCost.toFixed(2)}</div>
+                <button class="btn btn-secondary btn-small" style="margin-top:0.5rem;" onclick="changeStatus(${q.id}, '${q.status}')">${q.status.toUpperCase()}</button>
+              </div>
+            </div>
+            <div style="margin-top:1.5rem; padding-top:1rem; border-top:1px solid #2a2a2a; display:flex; gap:0.5rem;">
+              <button class="btn btn-secondary btn-small" onclick="editQ(${q.id})">Cargar en Editor</button>
+              <button class="btn btn-danger btn-small" onclick="delQ(${q.id})">Borrar</button>
+            </div>
+          </div>
+        `).join('');
+        html += `</div>`;
+      });
+      
+      c.innerHTML = html;
+    }
+
+    window.changeStatus = (id, st) => { const q = quos.find(x => x.id === id); q.status = st === 'pendiente' ? 'pagado' : 'pendiente'; saveData(); showQuos(); showAccounting(); };
+    window.delQ = (id) => { if(confirm('¿Eliminar cotización?')) { quos = quos.filter(x => x.id !== id); saveData(); showQuos(); showAccounting(); } };
+    window.editQ = (id) => { const q = quos.find(x => x.id === id); editQuo = q.id; document.getElementById('q-client').value = q.clientName; document.getElementById('q-ship').value = q.shippingCost; its = JSON.parse(JSON.stringify(q.items)); cnt = its.length; document.querySelector('[data-tab="new-quote"]').click(); showIts(); };
+
+    // ═══════════════════════════════════════════════════════════════
+    // 6. CONTABILIDAD
+    // ═══════════════════════════════════════════════════════════════
+    function showAccounting() {
+      const paid = quos.filter(q => q.status === 'pagado');
+      const totalSales = paid.reduce((s,x) => s + x.totalCost, 0);
+      const paidCount = paid.length;
+      document.getElementById('accounting-list').innerHTML = `<div class="card" style="display:flex; justify-content:space-between; background:rgba(16,185,129,0.05); border-color:#10b981;"><div style="text-align:center; flex:1;"><div style="font-size:0.75rem; color:#10b981; margin-bottom:0.5rem;">TOTAL VENTAS</div><div style="font-size:2rem; font-weight:700; color:#10b981;">$${totalSales.toFixed(2)}</div></div><div style="text-align:center; flex:1;"><div style="font-size:0.75rem; color:#10b981; margin-bottom:0.5rem;">CANTIDAD</div><div style="font-size:2rem; font-weight:700; color:#10b981;">${paidCount}</div></div><div style="text-align:center; flex:1;"><div style="font-size:0.75rem; color:#10b981; margin-bottom:0.5rem;">PROMEDIO</div><div style="font-size:2rem; font-weight:700; color:#10b981;">$${paidCount > 0 ? (totalSales/paidCount).toFixed(2) : '0.00'}</div></div></div>`;
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // 7. CONFIGURACIÓN: RESPALDOS Y BANNERS BASE64
+    // ═══════════════════════════════════════════════════════════════
+    document.getElementById('theme-toggle').addEventListener('click', () => {
+      configs.dark = !configs.dark; saveData();
+      document.body.className = configs.dark ? 'dark-mode' : 'light-mode';
+      toast('Tema actualizado');
+    });
+    
+    document.body.className = configs.dark ? 'dark-mode' : 'light-mode';
+
+    function renderBanners() {
+      const imgTop = document.getElementById('img-banner-top');
+      const imgBot = document.getElementById('img-banner-bottom');
+      if(configs.bannerTop) { imgTop.src = configs.bannerTop; imgTop.style.display = 'block'; } else { imgTop.style.display = 'none'; }
+      if(configs.bannerBottom) { imgBot.src = configs.bannerBottom; imgBot.style.display = 'block'; } else { imgBot.style.display = 'none'; }
+    }
+
+    function processBase64(input, key) {
+      if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = (e) => { configs[key] = e.target.result; saveData(); renderBanners(); toast('Banner guardado exitosamente'); };
+        reader.readAsDataURL(input.files[0]);
+      }
+    }
+
+    document.getElementById('upload-top').addEventListener('change', function() { processBase64(this, 'bannerTop'); });
+    document.getElementById('upload-bottom').addEventListener('change', function() { processBase64(this, 'bannerBottom'); });
+
+    window.capturarPantalla = () => {
+      const target = document.getElementById('area-recibo-captura');
+      const client = document.getElementById('q-client').value.trim() || 'Cotizacion';
+      const bgColor = configs.dark ? '#151515' : '#f9f9f9';
+      
+      html2canvas(target, { backgroundColor: bgColor, scale: 2, logging: false })
+        .then(canvas => {
+          const link = document.createElement('a');
+          link.download = `Cotizacion_${client.replace(/\s+/g, '_')}.png`;
+          link.href = canvas.toDataURL('image/png');
+          link.click();
+        }).catch(e => alert("Error capturando: " + e));
+    };
+
+    // FUNCIONES DE RESPALDO Y MANTENIMIENTO
+    window.descargarRespaldo = () => {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({mats, quos, configs}, null, 2));
+      const link = document.createElement('a');
+      link.download = `Respaldo_GrisFosforescente_${new Date().toISOString().split('T')[0]}.json`;
+      link.href = dataStr;
+      link.click();
+      toast('Respaldo descargado');
+    };
+
+    window.limpiarHistorial = () => {
+      if(confirm('¿Seguro que deseas eliminar TODAS las cotizaciones guardadas? Esto no afectará a los materiales ni a los banners.')) {
+        quos = [];
+        saveData();
+        showQuos();
+        showAccounting();
+        toast('Historial de cotizaciones eliminado');
+      }
+    };
+
+    window.purgarTodo = () => {
+      if(confirm('⚠️ ATENCIÓN: Se borrarán MATERIALES, COTIZACIONES Y CONFIGURACIONES de este dispositivo de forma irreversible. ¿Continuar?')) {
+        localStorage.clear();
+        mats = []; quos = []; configs = { dark: true, bannerTop: '', bannerBottom: '' };
+        saveData();
+        location.reload(); 
+      }
+    };
+
+    // BOOT
+    renderBanners(); showMats(); renderTopMaterialBar(); showIts();
+  </script>
+ </body>
+</html>
