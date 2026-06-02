@@ -140,7 +140,6 @@
   
   <div id="app-container">
    
-   <!-- SIDEBAR RETRÁCTIL -->
    <aside class="sidebar" id="sidebar">
      <div class="header">
        <h1 id="app-title">💼 Ventas</h1>
@@ -164,9 +163,6 @@
 
      <div class="main-content">
       
-      <!-- =========================================================
-           NUEVA COTIZACIÓN
-           ========================================================= -->
       <div id="new-quote-tab" class="tab-content active">
        <div class="pos-layout">
         
@@ -202,7 +198,8 @@
 
         <div class="pos-ticket">
          <div id="area-recibo-captura" class="ticket-capture-area">
-          <div class="ticket-banner"><img id="img-banner-top" style="display:none;"></div>
+          
+          <div class="ticket-banner"><img id="img-banner-top" src="Banner Top.png"></div>
           
           <div class="ticket-header">
            <h2>Cotización</h2>
@@ -223,7 +220,7 @@
            <div class="t-total-val" id="tk-total">$0.00</div>
           </div>
 
-          <div class="ticket-banner"><img id="img-banner-bottom" style="display:none;"></div>
+          <div class="ticket-banner"><img id="img-banner-bottom" src="Banner Bottom.png"></div>
          </div>
 
          <div class="ticket-actions">
@@ -236,9 +233,6 @@
        </div>
       </div>
 
-      <!-- =========================================================
-           MATERIALES
-           ========================================================= -->
       <div id="materials-tab" class="tab-content">
        <h2 class="section-title">Gestión de Materiales</h2>
        <form id="material-form" class="card">
@@ -257,25 +251,16 @@
        <div id="materials-list"></div>
       </div>
 
-      <!-- =========================================================
-           COTIZACIONES
-           ========================================================= -->
       <div id="quotes-tab" class="tab-content">
        <h2 class="section-title">Cotizaciones Guardadas</h2>
        <div id="quotes-list"></div>
       </div>
 
-      <!-- =========================================================
-           CONTABILIDAD
-           ========================================================= -->
       <div id="accounting-tab" class="tab-content">
        <h2 class="section-title">Contabilidad - Ventas Pagadas</h2>
        <div id="accounting-list"></div>
       </div>
 
-      <!-- =========================================================
-           CONFIGURACIÓN Y MANTENIMIENTO DE DATOS
-           ========================================================= -->
       <div id="config-tab" class="tab-content">
        <h2 class="section-title">Configuración del Sistema</h2>
        <div class="card">
@@ -284,14 +269,14 @@
        
        <div class="card" style="margin-top:2rem;">
          <h3 style="margin-bottom:1rem; font-weight:400; text-transform:uppercase; letter-spacing:2px; font-size:1rem;">Banners del Ticket (Offline)</h3>
-         <p style="font-size:0.85rem; opacity:0.7; margin-bottom:1.5rem;">Carga las imágenes desde tu computadora. Se guardarán internamente en tu navegador para que la captura de pantalla funcione siempre sin requerir internet.</p>
+         <p style="font-size:0.85rem; opacity:0.7; margin-bottom:1.5rem;">Tus banners "Banner Top.png" y "Banner Bottom.png" ya cargan por defecto. Si alguna vez quieres cambiarlos o falla la foto en algún dispositivo, cárgalos aquí abajo en formato Base64 para incrustarlos directo en el código.</p>
          
          <div class="form-group">
-           <label class="form-label">Cargar Banner Superior</label>
+           <label class="form-label">Cargar Banner Superior Alternativo</label>
            <input type="file" class="form-input" id="upload-top" accept="image/png, image/jpeg">
          </div>
          <div class="form-group" style="margin-top:1.5rem;">
-           <label class="form-label">Cargar Banner Inferior</label>
+           <label class="form-label">Cargar Banner Inferior Alternativo</label>
            <input type="file" class="form-input" id="upload-bottom" accept="image/png, image/jpeg">
          </div>
        </div>
@@ -318,9 +303,10 @@
       document.getElementById('sidebar').classList.toggle('collapsed');
     });
 
+    // Configuraciones inician con valores por defecto a los nombres de tus archivos
     let mats = JSON.parse(localStorage.getItem('sys_mats')) || [];
     let quos = JSON.parse(localStorage.getItem('sys_quos')) || [];
-    let configs = JSON.parse(localStorage.getItem('sys_cfg')) || { dark: true, bannerTop: '', bannerBottom: '' };
+    let configs = JSON.parse(localStorage.getItem('sys_cfg')) || { dark: true, bannerTop: 'Banner Top.png', bannerBottom: 'Banner Bottom.png' };
     let its = [];
     let cnt = 0;
     let editMat = null;
@@ -505,7 +491,6 @@
             <label class="checkbox-option"><input type="checkbox" id="lam-${it.id}" ${it.lam ? 'checked' : ''}> Laminado</label>
           </div>
 
-          <!-- LA INFO PARA LA VENDEDORA QUE NO SALE EN EL TICKET -->
           <div id="stats-${it.id}" class="internal-stats"></div>
         </div>
       `).join('');
@@ -565,13 +550,12 @@
     window.delM = (id) => { if(confirm('¿Borrar material?')) { mats = mats.filter(x => x.id !== id); saveData(); showMats(); renderTopMaterialBar(); showIts(); } };
 
     // ═══════════════════════════════════════════════════════════════
-    // 5. HISTORIAL AGRUPADO POR DÍAS (COMO EN TU IMAGEN)
+    // 5. HISTORIAL AGRUPADO POR DÍAS
     // ═══════════════════════════════════════════════════════════════
     function showQuos() {
       const c = document.getElementById('quotes-list');
       if(!quos.length) { c.innerHTML = '<div class="empty-state">No hay cotizaciones</div>'; return; }
 
-      // Agrupar por fecha
       const grouped = {};
       quos.forEach(q => {
         const dateStr = new Date(q.date).toLocaleDateString();
@@ -580,7 +564,6 @@
         grouped[dateStr].totalDay += q.totalCost;
       });
 
-      // Ordenar fechas (más recientes primero)
       const sortedDates = Object.keys(grouped).sort((a, b) => {
          return new Date(grouped[b].quotes[0].date) - new Date(grouped[a].quotes[0].date);
       });
@@ -654,8 +637,10 @@
     function renderBanners() {
       const imgTop = document.getElementById('img-banner-top');
       const imgBot = document.getElementById('img-banner-bottom');
-      if(configs.bannerTop) { imgTop.src = configs.bannerTop; imgTop.style.display = 'block'; } else { imgTop.style.display = 'none'; }
-      if(configs.bannerBottom) { imgBot.src = configs.bannerBottom; imgBot.style.display = 'block'; } else { imgBot.style.display = 'none'; }
+      
+      // Usa las imágenes hardcodeadas si es que no hay un Base64 cargado desde configuración.
+      imgTop.src = configs.bannerTop || 'Banner Top.png';
+      imgBot.src = configs.bannerBottom || 'Banner Bottom.png';
     }
 
     function processBase64(input, key) {
@@ -706,7 +691,7 @@
     window.purgarTodo = () => {
       if(confirm('⚠️ ATENCIÓN: Se borrarán MATERIALES, COTIZACIONES Y CONFIGURACIONES de este dispositivo de forma irreversible. ¿Continuar?')) {
         localStorage.clear();
-        mats = []; quos = []; configs = { dark: true, bannerTop: '', bannerBottom: '' };
+        mats = []; quos = []; configs = { dark: true, bannerTop: 'Banner Top.png', bannerBottom: 'Banner Bottom.png' };
         saveData();
         location.reload(); 
       }
